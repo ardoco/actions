@@ -1,6 +1,13 @@
 ## maven.yml
 Builds a maven project w/o maven central and JDK 17
 
+You have multiple options to use this workflow:
+* with-submodules: defines if the project has submodules to clone
+* deploy: defines if the project should be deployed to OSSRH
+* runs-on: defines the runner to use (default: ubuntu-latest)
+* dependencies: defines the git urls for dependencies to install (have to be maven projects)
+
+
 ### Verify without Deployment
 ```yml
 name: Maven Verify

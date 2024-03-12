@@ -17,6 +17,11 @@ on:
           type: string
           required: false
           default: "ubuntu-latest"
+        dependencies:
+          description: "A list (comma separated) of maven based repositories that have to be installed before deploying"
+          type: string
+          required: false
+          default: ""
 
     secrets:
       OSSRH_USER:
@@ -45,6 +50,17 @@ jobs:
     name: "Build and/or Deploy"
     runs-on: ${{ inputs.runs-on }}
     steps:
+    - name: Install Dependencies (Maven)
+      if: ${{ inputs.dependencies != '' }}
+      shell: bash
+      run: |
+        for dep in $(echo ${{ inputs.dependencies }} | tr "," "\n")
+        do
+          git clone --depth 1 -b ${{github.ref_name}} "$dep"
+          cd $(basename $dep .git)
+          mvn -Pdeployment -DskipTests -U -B install
+          cd ..
+        done
     - uses: actions/checkout@v4
       with:
         submodules: ${{ inputs.with-submodules }}
