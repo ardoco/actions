@@ -6,6 +6,7 @@ You have multiple options to use this workflow:
 * deploy: defines if the project should be deployed to OSSRH
 * runs-on: defines the runner to use (default: ubuntu-latest)
 * dependencies: defines the git urls for dependencies to install (have to be maven projects)
+* install-self: defines whether the project shall install itself first (before running tests)
 
 
 ### Verify without Deployment

@@ -22,6 +22,11 @@ on:
           type: string
           required: false
           default: ""
+        install-self:
+          description: "Install the project itself before deploying"
+          type: boolean
+          required: false
+          default: false
 
     secrets:
       OSSRH_USER:
@@ -50,6 +55,30 @@ jobs:
     name: "Build and/or Deploy"
     runs-on: ${{ inputs.runs-on }}
     steps:
+    - name: Java with Cache
+      uses: actions/setup-java@v4
+      if: ${{ !inputs.deploy }}
+      with:
+        java-version: 21
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Java without Cache
+      uses: actions/setup-java@v4
+      if: ${{ inputs.deploy }}
+      with:
+        java-version: 21
+        distribution: 'temurin'
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: ${{ inputs.with-submodules }}
+
+    - name: Install Dependency (Self)
+      if: ${{ inputs.install-self }}
+      shell: bash
+      run: mvn -Pdeployment -DskipTests -U -B install
+
     - name: Install Dependencies (Maven)
       if: ${{ inputs.dependencies != '' }}
       shell: bash
@@ -60,26 +89,8 @@ jobs:
           cd $(basename $dep .git)
           mvn -Pdeployment -DskipTests -U -B install
           cd ..
+          rm -rf $(basename $dep .git)
         done
-    - uses: actions/checkout@v4
-      with:
-        submodules: ${{ inputs.with-submodules }}
-
-    - name: Java with Cache
-      uses: actions/setup-java@v4
-      if: ${{ !inputs.deploy }}
-      with:
-        java-version: 21
-        distribution: 'temurin'
-        cache: 'maven'
-
-
-    - name: Java without Cache
-      uses: actions/setup-java@v4
-      if: ${{ inputs.deploy }}
-      with:
-        java-version: 21
-        distribution: 'temurin'
 
     - name: Maven Verify
       shell: bash
