@@ -13,6 +13,16 @@ on:
           type: string
           required: false
           default: "ubuntu-latest"
+        dependencies:
+          description: "A list (comma separated) of maven based repositories that have to be installed before deploying"
+          type: string
+          required: false
+          default: ""
+        install-self:
+          description: "Install the project itself before deploying"
+          type: boolean
+          required: false
+          default: false
     secrets:
       SONAR_TOKEN:
         required: true
@@ -48,7 +58,25 @@ jobs:
         distribution: 'temurin'
         java-version: 21
         cache: 'maven'
-                
+
+    - name: Install Dependency (Self)
+      if: ${{ inputs.install-self }}
+      shell: bash
+      run: mvn -Pdeployment -DskipTests -Dgpg.skip -U -B install
+
+    - name: Install Dependencies (Maven)
+      if: ${{ inputs.dependencies != '' }}
+      shell: bash
+      run: |
+        for dep in $(echo ${{ inputs.dependencies }} | tr "," "\n")
+        do
+          git clone --depth 1 -b ${{github.ref_name}} "$dep"
+          cd $(basename $dep .git)
+          mvn -Pdeployment -DskipTests -Dgpg.skip -U -B install
+          cd ..
+          rm -rf $(basename $dep .git)
+        done
+
     - name: Build and Analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any

@@ -77,7 +77,7 @@ jobs:
     - name: Install Dependency (Self)
       if: ${{ inputs.install-self }}
       shell: bash
-      run: mvn -Pdeployment -DskipTests -U -B install
+      run: mvn -Pdeployment -DskipTests -Dgpg.skip -U -B install
 
     - name: Install Dependencies (Maven)
       if: ${{ inputs.dependencies != '' }}
@@ -87,7 +87,7 @@ jobs:
         do
           git clone --depth 1 -b ${{github.ref_name}} "$dep"
           cd $(basename $dep .git)
-          mvn -Pdeployment -DskipTests -U -B install
+          mvn -Pdeployment -DskipTests -Dgpg.skip -U -B install
           cd ..
           rm -rf $(basename $dep .git)
         done
