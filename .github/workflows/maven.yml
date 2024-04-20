@@ -86,7 +86,11 @@ jobs:
       run: |
         for dep in $(echo ${{ inputs.dependencies }} | tr "," "\n")
         do
-          git clone --depth 1 -b ${{github.ref_name}} "$dep"
+          if git ls-remote --heads "$dep" "${{github.ref_name}}" | grep -q "${{github.ref_name}}"; then
+            git clone --depth 1 -b ${{github.ref_name}} "$dep"
+          else
+            git clone --depth 1 -b main "$dep"
+          fi
           cd $(basename $dep .git)
           mvn -Pdeployment -DskipTests -Dgpg.skip -U -B install
           cd ..
