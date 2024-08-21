@@ -73,7 +73,18 @@ jobs:
       run: |
         for dep in $(echo ${{ inputs.dependencies }} | tr "," "\n")
         do
-          git clone --depth 1 -b ${{github.ref_name}} "$dep"
+          branch=$(echo "${{github.ref_name}}")
+          # if PR (see github.event_name) we have to use github.head_ref
+          if [ "${{github.event_name}}" == "pull_request" ]; then
+            branch=$(echo "${{github.head_ref}}")
+          fi
+
+          if git ls-remote --heads "$dep" "$branch" | grep -q "$branch"; then
+            git clone --depth 1 -b "$branch" "$dep"
+          else
+            git clone --depth 1 -b main "$dep"
+          fi
+
           cd $(basename $dep .git)
           mvn -Pdeployment -DskipTests -Dgpg.skip -U -B install
           cd ..
