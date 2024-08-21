@@ -26,7 +26,7 @@ on:
     secrets:
       SONAR_TOKEN:
         required: true
-          
+
 jobs:
   pre_job:
     name: "Check for duplicate jobs"
@@ -39,13 +39,13 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          
+
   build:
     needs: pre_job
     name: "SonarCloud Scan"
     runs-on: ${{ inputs.runs-on }}
     if: ${{ needs.pre_job.outputs.should_skip != 'true' && github.actor != 'dependabot[bot]' }}
-    
+
     steps:
     - uses: actions/checkout@v4
       with:

@@ -25,7 +25,7 @@ on:
           description: "The digit to be automatically incremented. E.g., Major, Minor, or Patch"
           type: string
           required: false
-          default: "Patch"              
+          default: "Patch"
     secrets:
       PAT:
         required: true
@@ -34,7 +34,7 @@ jobs:
     build:
         name: "Trigger new Release"
         runs-on: ${{ inputs.runs-on }}
-    
+
         steps:
         - uses: actions/checkout@v4
           with:
@@ -42,20 +42,20 @@ jobs:
             submodules: ${{ inputs.with-submodules }}
 
         - uses: joshlong/java-version-export-github-action@v28
-          id: jve            
-          
+          id: jve
+
         - name: Set up JDK
           uses: actions/setup-java@v4
           with:
             distribution: 'temurin'
             java-version: ${{ steps.jve.outputs.java_major_version }}
-    
+
         - name: Prepare GIT
           shell: bash
           run: |
             git config --global user.email "action@github.com"
             git config --global user.name "GitHub Action"
-    
+
         - name: Bump to Release, Verify, Bump to Next Version, and Verify
           shell: bash
           run: |
@@ -74,13 +74,13 @@ jobs:
             cat /tmp/maven-version-update.sh
             echo "######################################################"
             echo "######### Running maven-version-update.sh ###########"
-            RELEASE_VERSION=${{ inputs.release-version }} NEXT_VERSION=${{ inputs.next-version }} AUTO_DIGIT=${{ inputs.auto-digit }} bash /tmp/maven-version-update.sh  
+            RELEASE_VERSION=${{ inputs.release-version }} NEXT_VERSION=${{ inputs.next-version }} AUTO_DIGIT=${{ inputs.auto-digit }} bash /tmp/maven-version-update.sh
             echo "######################################################"
-            
+
         - name: Push Changes
           uses: ad-m/github-push-action@master
           with:
             # See https://github.com/orgs/community/discussions/25702 and https://github.com/orgs/community/discussions/26220
             github_token: ${{ secrets.PAT }}
             branch: ${{ github.ref }}
-            tags: true 
+            tags: true

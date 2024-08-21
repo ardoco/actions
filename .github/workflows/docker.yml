@@ -21,8 +21,8 @@ on:
           description: "Tag for the runner to use in the main job."
           type: string
           required: false
-          default: "ubuntu-latest"          
-          
+          default: "ubuntu-latest"
+
 jobs:
   pre_job:
     name: "Check for duplicate jobs"
@@ -35,13 +35,13 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          
+
   build:
     needs: pre_job
     name: "Docker Build and/or Deploy"
     runs-on: ${{ inputs.runs-on }}
     if: ${{ needs.pre_job.outputs.should_skip != 'true' && github.actor != 'dependabot[bot]' }}
-    
+
     permissions:
       contents: read
       packages: write

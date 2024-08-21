@@ -17,7 +17,7 @@ on:
           description: "The digit to be automatically incremented. E.g., Major, Minor, or Patch"
           type: string
           required: false
-          default: "Patch"  
+          default: "Patch"
     secrets:
       PAT:
         required: true
@@ -34,7 +34,7 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          
+
   build:
     needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
@@ -47,7 +47,7 @@ jobs:
         persist-credentials: false
 
     - uses: joshlong/java-version-export-github-action@v28
-      id: jve   
+      id: jve
 
     - uses: actions/setup-java@v4
       with:
@@ -80,9 +80,9 @@ jobs:
         cat /tmp/maven-version-update.sh
         echo "######################################################"
         echo "######### Running maven-version-update.sh ###########"
-        AUTO_DIGIT=${{ inputs.auto-digit }} bash /tmp/maven-version-update.sh  
+        AUTO_DIGIT=${{ inputs.auto-digit }} bash /tmp/maven-version-update.sh
         echo "######################################################"
-        
+
     - name: Push Changes
       uses: ad-m/github-push-action@master
       with:

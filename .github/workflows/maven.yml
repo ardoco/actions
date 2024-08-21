@@ -35,7 +35,7 @@ on:
         required: true
       GPG_KEY:
         required: true
-          
+
 jobs:
   pre_job:
     name: "Check for duplicate jobs"
@@ -48,7 +48,7 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          
+
   build:
     needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
@@ -61,7 +61,7 @@ jobs:
         submodules: ${{ inputs.with-submodules }}
 
     - uses: joshlong/java-version-export-github-action@v28
-      id: jve   
+      id: jve
 
     - name: Java with Cache
       uses: actions/setup-java@v4
@@ -89,8 +89,14 @@ jobs:
       run: |
         for dep in $(echo ${{ inputs.dependencies }} | tr "," "\n")
         do
-          if git ls-remote --heads "$dep" "${{github.ref_name}}" | grep -q "${{github.ref_name}}"; then
-            git clone --depth 1 -b ${{github.ref_name}} "$dep"
+          branch=$(echo "${{github.ref_name}}")
+          # if PR (see github.event_name) we have to use github.head_ref
+          if [ "${{github.event_name}}" == "pull_request" ]; then
+            branch=$(echo "${{github.head_ref}}")
+          fi
+
+          if git ls-remote --heads "$dep" "$branch" | grep -q "$branch"; then
+            git clone --depth 1 -b "$branch" "$dep"
           else
             git clone --depth 1 -b main "$dep"
           fi

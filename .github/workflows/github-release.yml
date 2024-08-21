@@ -27,7 +27,7 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          
+
   release:
     needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
@@ -50,11 +50,11 @@ jobs:
         fi
         echo "# Commits since last release" > CHANGELOG.txt
         echo "$DIFF" | sed 's/^/* /' | sed '/Auto-Update Dependencies/{s/Updated\|Updating/\n\t* Updated/g}' | sed '/\[maven-release-plugin\]/d' | sed '/Merge branch/d' | sed '/Prepare for next development cycle/d' | sed -r '/.*\(#\w+\)$/d' >> CHANGELOG.txt
-        
+
     - uses: softprops/action-gh-release@v2
       with:
         body_path: CHANGELOG.txt
         generate_release_notes: true
 
 
- 
+
