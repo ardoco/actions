@@ -3,7 +3,7 @@ Builds a maven project w/o maven central and JDK 17
 
 You have multiple options to use this workflow:
 * with-submodules: defines if the project has submodules to clone
-* deploy: defines if the project should be deployed to OSSRH
+* deploy: defines if the project should be deployed to Maven Central
 * runs-on: defines the runner to use (default: ubuntu-latest)
 * dependencies: defines the git urls for dependencies to install (have to be maven projects)
 * install-self: defines whether the project shall install itself first (before running tests)
@@ -32,8 +32,8 @@ jobs:
       deploy: false
       with-submodules: true
     secrets:
-      OSSRH_USER: ${{secrets.OSSRH_USER}}
-      OSSRH_TOKEN: ${{secrets.OSSRH_TOKEN}}
+      CENTRAL_USER: ${{secrets.CENTRAL_USER}}
+      CENTRAL_TOKEN: ${{secrets.CENTRAL_TOKEN}}
       GPG_KEY: ${{secrets.GPG_KEY}}
 ```
 
@@ -59,8 +59,8 @@ jobs:
     with:
       deploy: true
     secrets:
-      OSSRH_USER: ${{secrets.OSSRH_USER}}
-      OSSRH_TOKEN: ${{secrets.OSSRH_TOKEN}}
+      CENTRAL_USER: ${{secrets.CENTRAL_USER}}
+      CENTRAL_TOKEN: ${{secrets.CENTRAL_TOKEN}}
       GPG_KEY: ${{secrets.GPG_KEY}}
 ```
 

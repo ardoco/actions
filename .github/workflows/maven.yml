@@ -29,9 +29,9 @@ on:
           default: false
 
     secrets:
-      OSSRH_USER:
+      CENTRAL_USER:
         required: true
-      OSSRH_TOKEN:
+      CENTRAL_TOKEN:
         required: true
       GPG_KEY:
         required: true
