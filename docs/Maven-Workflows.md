@@ -37,7 +37,7 @@ jobs:
       GPG_KEY: ${{secrets.GPG_KEY}}
 ```
 
-### Verify and Deploy to OSSRH
+### Verify and Deploy to Maven Central
 ```yml
 name: Maven Deploy
 
