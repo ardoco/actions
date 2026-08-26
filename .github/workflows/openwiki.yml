@@ -22,7 +22,7 @@ on:
           description: "The OpenRouter model id that OpenWiki uses to generate the documentation."
           type: string
           required: false
-          default: "z-ai/glm-5.2"
+          default: "z-ai/glm-5.3-flash"
         runs-on:
           description: "Tag for the runner to use in the main job."
           type: string
@@ -82,7 +82,7 @@ jobs:
 
       - name: Install OpenWiki
         if: steps.recent_commits.outputs.changed == 'true'
-        run: npm install --global openwiki
+        run: npm install --global openwiki mermaid jsdom
 
       - name: Run OpenWiki
         if: steps.recent_commits.outputs.changed == 'true'
