@@ -99,14 +99,29 @@ jobs:
         if: ${{ !cancelled() }}
         run: rm -f -- openwiki/.run.json
 
-      - name: Create OpenWiki update pull request
+      # git add aborts on a pathspec that matches nothing, so only pass paths that exist (or are tracked).
+      - name: Collect OpenWiki paths
+        id: paths
         if: steps.recent_commits.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "paths<<EOF"
+            for p in openwiki AGENTS.md CLAUDE.md; do
+              if [ -e "$p" ] || git ls-files --error-unmatch -- "$p" > /dev/null 2>&1; then
+                echo "$p"
+              fi
+            done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create OpenWiki update pull request
+        # An empty add-paths would make create-pull-request add every change, so skip in that case.
+        if: steps.recent_commits.outputs.changed == 'true' && steps.paths.outputs.paths != ''
         uses: peter-evans/create-pull-request@v8
         with:
-          add-paths: |
-            openwiki
-            AGENTS.md
-            CLAUDE.md
+          add-paths: ${{ steps.paths.outputs.paths }}
           base: ${{ inputs.branch }}
           branch: openwiki/update
           commit-message: "docs: update OpenWiki"
