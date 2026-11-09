@@ -59,7 +59,7 @@ jobs:
           set -euo pipefail
           git fetch origin "$BRANCH" --quiet
           TOTAL_COUNT=$(git rev-list --count --since="$LOOKBACK_DAYS days ago" "origin/$BRANCH")
-          RELEVANT_COUNT=$(git rev-list --count --since="$LOOKBACK_DAYS days ago" "origin/$BRANCH" -- . ':(exclude)openwiki/**')
+          RELEVANT_COUNT=$(git rev-list --count --since="$LOOKBACK_DAYS days ago" --perl-regexp --author='^((?!dependabot).)*$' "origin/$BRANCH" -- . ':(exclude)openwiki/**')
           echo "count=$RELEVANT_COUNT" >> "$GITHUB_OUTPUT"
           echo "total_count=$TOTAL_COUNT" >> "$GITHUB_OUTPUT"
           if [ "$RELEVANT_COUNT" -gt 0 ]; then
@@ -67,12 +67,12 @@ jobs:
             echo "Detected $RELEVANT_COUNT relevant commit(s) on $BRANCH in last $LOOKBACK_DAYS days (total commits: $TOTAL_COUNT)."
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No relevant commits on $BRANCH in last $LOOKBACK_DAYS days (ignoring openwiki/** updates; total commits: $TOTAL_COUNT)."
+            echo "No relevant commits on $BRANCH in last $LOOKBACK_DAYS days (ignoring openwiki/** and dependabot commits; total commits: $TOTAL_COUNT)."
           fi
 
       - name: Stop early when no changes
         if: steps.recent_commits.outputs.changed != 'true'
-        run: echo "Skipping OpenWiki update because ${{ inputs.branch }} has no relevant recent commits (openwiki/** only changes are ignored)."
+        run: echo "Skipping OpenWiki update because ${{ inputs.branch }} has no relevant recent commits (openwiki/** only changes and dependabot commits are ignored)."
 
       - name: Set up Node.js
         if: steps.recent_commits.outputs.changed == 'true'
