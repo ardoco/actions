@@ -64,6 +64,31 @@ jobs:
       GPG_KEY: ${{secrets.GPG_KEY}}
 ```
 
+## maven-snapshot.yml
+Deploys the `-SNAPSHOT` version of a maven project to the Maven package registry of a GitLab project (e.g., the ARDoCo mirrors on gitlab.kit.edu). The workflow fails if the project version (or the `revision` property, if defined) is not a snapshot.
+
+* gitlab-project-id: ID of the GitLab project whose package registry receives the snapshot (required)
+* gitlab-url: base URL of the GitLab instance (default: https://gitlab.kit.edu)
+* maven-args: additional Maven arguments (default: `-Pdeployment`)
+* with-submodules: defines if the project has submodules to clone
+* runs-on: defines the runner to use (default: ubuntu-latest)
+
+The secret `GITLAB_SNAPSHOT_TOKEN` must contain a GitLab deploy token with the scope `write_package_registry` (a group deploy token works for all projects of the group).
+
+```yml
+name: Deploy Snapshot
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: <<REPO>>/.github/workflows/maven-snapshot.yml@main
+    with:
+      gitlab-project-id: "203206"
+    secrets: inherit
+```
+
 ## maven-update.yml
 Update Dependencies and Update Versions
 
