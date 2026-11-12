@@ -1,0 +1,126 @@
+name: Deploy Maven Snapshot to GitLab
+
+on:
+  workflow_call:
+    inputs:
+      gitlab-project-id:
+        description: "ID of the GitLab project whose Maven package registry receives the snapshot"
+        type: string
+        required: true
+      gitlab-url:
+        description: "Base URL of the GitLab instance"
+        type: string
+        required: false
+        default: "https://gitlab.kit.edu"
+      maven-args:
+        description: "Additional Maven arguments (e.g., profiles)"
+        type: string
+        required: false
+        default: "-Pdeployment"
+      with-submodules:
+        description: "Clone repository with its submodules"
+        type: boolean
+        required: false
+        default: false
+      runs-on:
+        description: "Tag for the runner to use in the main job."
+        type: string
+        required: false
+        default: "ubuntu-latest"
+
+    secrets:
+      GITLAB_SNAPSHOT_TOKEN:
+        description: "GitLab deploy token with write_package_registry (sent as Deploy-Token header)"
+        required: true
+
+jobs:
+  deploy:
+    name: "Deploy Snapshot"
+    runs-on: ${{ inputs.runs-on }}
+    concurrency:
+      group: maven-snapshot-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+
+    - uses: actions/checkout@v7
+      with:
+        submodules: ${{ inputs.with-submodules }}
+
+    - name: Determine Java version
+      id: jve
+      shell: bash
+      run: |
+        for expr in maven.compiler.target maven.compiler.release java.version; do
+          v=$(mvn -B -q -N help:evaluate -DforceStdout -Dexpression="$expr" 2>/dev/null || true)
+          v=${v#1.}
+          if [[ "$v" =~ ^[0-9]+ ]]; then
+            echo "java_major_version=${BASH_REMATCH[0]}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+        done
+        echo "::error::Could not determine the Java version from the POM"
+        exit 1
+
+    - name: Java
+      uses: actions/setup-java@v6
+      with:
+        java-version: ${{ steps.jve.outputs.java_major_version }}
+        distribution: 'temurin'
+
+    # Maven 3.10 breaks deployments (see maven.yml)
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v5.1
+      with:
+        maven-version: 3.9.16
+
+    - name: Ensure snapshot version
+      shell: bash
+      run: |
+        version=$(mvn -B -q -N help:evaluate -DforceStdout -Dexpression=project.version)
+        echo "project.version: $version"
+        if [[ "$version" != *-SNAPSHOT ]]; then
+          echo "::error::Only -SNAPSHOT versions may be deployed to the snapshot registry (project.version is '$version')"
+          exit 1
+        fi
+        # Projects using CI-friendly versions define the actual version in the revision property
+        revision=$(mvn -B -q -N help:evaluate -DforceStdout -Dexpression=revision 2>/dev/null || true)
+        if [[ -n "$revision" && "$revision" != *"null object"* ]]; then
+          echo "revision: $revision"
+          if [[ "$revision" != *-SNAPSHOT ]]; then
+            echo "::error::Only -SNAPSHOT versions may be deployed to the snapshot registry (revision is '$revision')"
+            exit 1
+          fi
+        fi
+
+    - name: Deploy to GitLab
+      shell: bash
+      env:
+        GITLAB_TOKEN: ${{ secrets.GITLAB_SNAPSHOT_TOKEN }}
+        SNAPSHOT_REPOSITORY_URL: ${{ inputs.gitlab-url }}/api/v4/projects/${{ inputs.gitlab-project-id }}/packages/maven
+        EXTRA_MAVEN_ARGS: ${{ inputs.maven-args }}
+      run: |
+        if [ -z "$GITLAB_TOKEN" ]; then
+          echo "::error::Secret GITLAB_SNAPSHOT_TOKEN is not available"
+          exit 1
+        fi
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml <<'EOF'
+        <settings>
+          <servers>
+            <server>
+              <id>gitlabSnapshots</id>
+              <configuration>
+                <httpHeaders>
+                  <property>
+                    <name>Deploy-Token</name>
+                    <value>${env.GITLAB_TOKEN}</value>
+                  </property>
+                </httpHeaders>
+              </configuration>
+            </server>
+          </servers>
+        </settings>
+        EOF
+        # shellcheck disable=SC2086 # word splitting of the additional arguments is intended
+        mvn -B $EXTRA_MAVEN_ARGS -DskipTests -Dgpg.skip package deploy:deploy \
+          -DaltDeploymentRepository=gitlabSnapshots::${SNAPSHOT_REPOSITORY_URL}
