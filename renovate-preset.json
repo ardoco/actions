@@ -1,0 +1,27 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate defaults for ARDoCo repositories; use with \"extends\": [\"local>ArDoCo/actions:renovate-preset\"]",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["* 11-17 * * 3"],
+  "ignoreUnstable": true,
+  "packageRules": [
+    {
+      "description": "Final releases only: no milestones, release candidates, alphas, betas, previews or snapshots",
+      "matchPackageNames": ["*"],
+      "allowedVersions": "!/[.-]([Mm]|RC|rc|CR|cr|[Aa]lpha|ALPHA|[Bb]eta|BETA|[Pp]review|SNAPSHOT|ea)[.-]?[0-9]*$/"
+    },
+    {
+      "description": "Java LTS only (21, 25, next 29): no major updates of the JDK images; floating tags such as eclipse-temurin:25-jre stay as they are",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["eclipse-temurin", "maven"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Java LTS only for setup-java and other java-version references",
+      "matchDatasources": ["java-version"],
+      "allowedVersions": "/^(21|25|29)(\\.|$)/"
+    }
+  ]
+}
